@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexBank India | AI Credit Line Underwriting (XGBoost & Logistic Regression)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-amber-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+          <i class="fa-solid fa-indian-rupee-sign text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+            ApexBank <span class="text-orange-400 font-semibold text-xs ml-1 px-2 py-0.5 rounded-full bg-orange-950/80 border border-orange-800">Bharat CreditRisk</span>
+          </span>
+          <p class="text-[11px] text-slate-400">Automated Credit Line Underwriting (XGBoost &amp; Logistic Regression)</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-1 sm:space-x-2 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+        <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-orange-600 text-white shadow">
+          <i class="fa-solid fa-sliders mr-2"></i>Simulator
+        </button>
+        <button onclick="switchTab('batch')" id="tab-batch" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-layer-group mr-2"></i>Portfolio Batch
+        </button>
+        <button onclick="switchTab('models')" id="tab-models" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-chart-line mr-2"></i>XGBoost vs LogReg
+        </button>
+        <button onclick="switchTab('compliance')" id="tab-compliance" class="tab-btn px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-scale-balanced mr-2"></i>RBI Compliance
+        </button>
+      </nav>
+
+      <!-- System Status Pill -->
+      <div class="hidden lg:flex items-center space-x-2 text-xs">
+        <span class="flex items-center space-x-1.5 text-emerald-400 bg-emerald-950/50 border border-emerald-800/60 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>INR (₹) Engine Online</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: INTERACTIVE UNDERWRITING SIMULATOR   -->
+    <!-- ========================================== -->
+    <div id="view-simulator" class="tab-view block space-y-8">
+      
+      <!-- Quick Archetype Selectors & Model Algorithm Switcher -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl backdrop-blur">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-orange-400 flex items-center">
+              <i class="fa-solid fa-bolt mr-2"></i> Instant Applicant Archetypes (Indian Profiles)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Select a customer archetype to benchmark instant automated underwriting in INR (₹):</p>
+          </div>
+
+          <!-- Active Algorithm Selector -->
+          <div class="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400 px-2 font-medium">Model:</span>
+            <button onclick="selectModel('xgboost')" id="btn-model-xgb" class="px-3 py-1 rounded-lg text-xs font-semibold bg-orange-600 text-white shadow transition">
+              <i class="fa-solid fa-microchip mr-1.5"></i>XGBoost (Champion)
+            </button>
+            <button onclick="selectModel('logistic_regression')" id="btn-model-lr" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+              <i class="fa-solid fa-calculator mr-1.5"></i>Logistic Regression
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4" id="preset-buttons">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Two Column Layout: Application Form & Decision Output -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Application Input Form (6 Cols) -->
+        <div class="lg:col-span-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-regular fa-id-card text-orange-400 mr-2.5"></i> Indian Credit Application Parameters
+            </h3>
+            <span class="text-xs font-mono text-slate-400" id="display-app-id">ID: IN-APP-LIVE</span>
+          </div>
+
+          <form id="applicant-form" class="space-y-5" onsubmit="event.preventDefault(); submitApplication();">
+            
+            <!-- Row 1: Annual Income & CIBIL Score -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Annual Verified Income (₹)</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">₹</span>
+                  <input type="number" id="annual_income" value="1200000" min="200000" max="10000000" step="25000" class="input-field pl-8">
+                </div>
+                <span class="text-[10px] text-slate-500 mt-0.5 block" id="income-hint">₹12,00,000 (12.0 Lakhs / yr)</span>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">CIBIL Bureau Score (300 - 900)</label>
+                <input type="number" id="credit_score" value="745" min="300" max="900" class="input-field">
+                <span class="text-[10px] text-slate-500 mt-0.5 block">Standard Indian CIBIL Range</span>
+              </div>
+            </div>
+
+            <!-- Row 2: FOIR / DTI & Revolving Utilization -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="text-xs font-medium text-slate-300">Debt-to-Income / FOIR</label>
+                  <span class="text-xs font-mono text-orange-400" id="val-dti">26.0%</span>
+                </div>
+                <input type="range" id="debt_to_income" min="0.05" max="0.70" step="0.01" value="0.26" class="w-full accent-orange-500" oninput="document.getElementById('val-dti').innerText = (this.value * 100).toFixed(1) + '%'">
+              </div>
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="text-xs font-medium text-slate-300">Credit Card Utilization</label>
+                  <span class="text-xs font-mono text-orange-400" id="val-util">30.0%</span>
+                </div>
+                <input type="range" id="revolving_utilization" min="0.01" max="1.15" step="0.01" value="0.30" class="w-full accent-orange-500" oninput="document.getElementById('val-util').innerText = (this.value * 100).toFixed(1) + '%'">
+              </div>
+            </div>
+
+            <!-- Row 3: Revolving Balance & Credit History Years -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Current Credit Card Spends / Balance (₹)</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">₹</span>
+                  <input type="number" id="revolving_balance" value="65000" min="0" max="2500000" step="5000" class="input-field pl-8">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">CIBIL Vintage / History (Years)</label>
+                <input type="number" id="credit_history_years" value="8.0" min="0.5" max="40" step="0.5" class="input-field">
+              </div>
+            </div>
+
+            <!-- Row 4: Age & Employment Years -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Applicant Age</label>
+                <input type="number" id="age" value="34" min="21" max="75" class="input-field">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Employment / Business Vintage (Yrs)</label>
+                <input type="number" id="employment_years" value="6.0" min="0" max="35" step="0.5" class="input-field">
+              </div>
+            </div>
+
+            <!-- Row 5: Delinquencies, Derogatory Records, Inquiries -->
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">DPD Delinquencies (2Y)</label>
+                <input type="number" id="delinquencies_2yrs" value="0" min="0" max="10" class="input-field">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Derogatory / Write-offs</label>
+                <input type="number" id="num_derogatory_records" value="0" min="0" max="10" class="input-field">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Hard Inquiries (6M)</label>
+                <input type="number" id="num_credit_inquiries_6m" value="1" min="0" max="15" class="input-field">
+              </div>
+            </div>
+
+            <!-- Row 6: Categorical Selects & NPA Record -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Residential Status</label>
+                <select id="home_ownership" class="input-field">
+                  <option value="SELF_OWNED">SELF OWNED</option>
+                  <option value="PARENTAL_OWNED">PARENTAL OWNED</option>
+                  <option value="RENTED" selected>RENTED</option>
+                  <option value="MORTGAGED">MORTGAGED</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Credit Line Purpose</label>
+                <select id="loan_purpose" class="input-field">
+                  <option value="CREDIT_CARD_CONSOLIDATION" selected>CARD CONSOLIDATION</option>
+                  <option value="HOME_RENOVATION">HOME RENOVATION</option>
+                  <option value="BUSINESS_WORKING_CAPITAL">BUSINESS CAPITAL</option>
+                  <option value="MEDICAL_EMERGENCY">MEDICAL EMERGENCY</option>
+                  <option value="WEDDING_EXPENSE">WEDDING EXPENSE</option>
+                  <option value="CONSUMER_DURABLES">CONSUMER DURABLES</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">NPA / Written-Off Status</label>
+                <select id="bankruptcy_history" class="input-field">
+                  <option value="0" selected>0 - Clean Status</option>
+                  <option value="1">1 - NPA / Settled Record</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 transition-all shadow-lg shadow-orange-600/30 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-fingerprint"></i>
+              <span>Underwrite Credit Line (XGBoost &amp; Logistic Regression)</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Decision Hero Card & Explainability Breakdown (6 Cols) -->
+        <div class="lg:col-span-6 space-y-6">
+          
+          <!-- Real-Time Decision Card -->
+          <div id="decision-card" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-2xl relative overflow-hidden transition-all duration-300">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs uppercase font-mono tracking-widest text-slate-400">Institutional Decision</span>
+                  <span id="display-model-badge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-orange-400 font-mono">XGBoost</span>
+                </div>
+                <h3 id="display-decision" class="text-3xl font-extrabold tracking-tight mt-1 text-emerald-400 flex items-center">
+                  <i class="fa-solid fa-circle-check mr-2"></i> APPROVED
+                </h3>
+                <p id="display-risk-tier" class="text-xs font-medium text-slate-300 mt-1">Tier: Prime (Tier 2 - CIBIL 710-779)</p>
+              </div>
+
+              <!-- Default Probability Gauge Box -->
+              <div class="text-right">
+                <span class="text-xs text-slate-400">Probability of Default (PD)</span>
+                <div id="display-pd" class="text-3xl font-black font-mono text-orange-400">0.8%</div>
+                <span id="display-confidence" class="text-xs text-slate-500">Confidence: 99.2%</span>
+              </div>
+            </div>
+
+            <!-- Two Metric Stat Cards: Recommended Credit Line in INR & Suggested APR -->
+            <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+              <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400 block">Sanctioned Credit Line</span>
+                <span id="display-credit-line" class="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-1 block">₹2,80,000</span>
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Risk-Adjusted Capacity (INR)</span>
+              </div>
+              <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400 block">Indicative Pricing (APR)</span>
+                <span id="display-apr" class="text-base sm:text-lg font-bold text-orange-300 font-mono mt-1 block">19.50% - 24.00% p.a.</span>
+                <span class="text-[10px] text-slate-400 mt-0.5 block">Standard Indian Card Pricing</span>
+              </div>
+            </div>
+
+            <!-- Financial Capacity Snapshot -->
+            <div class="grid grid-cols-3 gap-2 mt-4 text-center text-xs bg-slate-950/40 p-3 rounded-lg border border-slate-800/60 text-slate-400">
+              <div>Monthly Surplus: <span id="snap-disposable" class="text-white font-semibold">₹74,000</span></div>
+              <div>FOIR (DTI): <span id="snap-dti" class="text-white font-semibold">26.0%</span></div>
+              <div>CIBIL Score: <span id="snap-fico" class="text-white font-semibold">745</span></div>
+            </div>
+
+            <!-- Model Comparison Sub-Bar -->
+            <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+              <span>XGBoost Approval Prob: <strong id="cmp-xgb" class="text-white">99.2%</strong></span>
+              <span>Logistic Regression Prob: <strong id="cmp-lr" class="text-white">98.9%</strong></span>
+            </div>
+          </div>
+
+          <!-- Explainability Container (RBI Adverse Action Notice OR Underwriting Strengths) -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h4 id="explain-header" class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center">
+                <i class="fa-solid fa-list-check text-orange-400 mr-2"></i> Principal Underwriting Factors
+              </h4>
+              <span id="explain-badge" class="text-xs px-2.5 py-0.5 rounded-full font-mono bg-orange-950 text-orange-300 border border-orange-800">RBI Master Directions</span>
+            </div>
+
+            <div id="explain-content" class="space-y-3">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: BATCH PORTFOLIO STRESS-TESTER       -->
+    <!-- ========================================== -->
+    <div id="view-batch" class="tab-view hidden space-y-8">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center">
+              <i class="fa-solid fa-layer-group text-orange-400 mr-2.5"></i> Credit Portfolio Underwriting Simulator (INR / ₹)
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Stress-test a cohort of Indian credit line applications simultaneously across XGBoost and Logistic Regression.</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="runSampleBatch()" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-orange-600 hover:bg-orange-500 transition shadow">
+              <i class="fa-solid fa-play mr-1.5"></i> Run 25 Applicant Cohort
+            </button>
+          </div>
+        </div>
+
+        <!-- Portfolio Aggregate KPI Cards in INR -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400">Total Applicants</span>
+            <span id="batch-total" class="text-2xl font-black text-white block mt-1">--</span>
+          </div>
+          <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400">Approval Rate</span>
+            <span id="batch-approval-rate" class="text-2xl font-black text-emerald-400 block mt-1">--%</span>
+          </div>
+          <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400">Total Capital Sanctioned</span>
+            <span id="batch-total-capital" class="text-2xl font-black text-orange-400 block mt-1">₹--</span>
+          </div>
+          <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400">Avg Credit Limit Extended</span>
+            <span id="batch-avg-line" class="text-2xl font-black text-purple-400 block mt-1">₹--</span>
+          </div>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="mt-6 overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+              <tr>
+                <th class="p-3">Applicant ID</th>
+                <th class="p-3">Annual Income</th>
+                <th class="p-3">CIBIL</th>
+                <th class="p-3">FOIR (DTI)</th>
+                <th class="p-3">PD Prob</th>
+                <th class="p-3">Decision</th>
+                <th class="p-3">Sanctioned Line (INR)</th>
+                <th class="p-3">Risk Tier</th>
+              </tr>
+            </thead>
+            <tbody id="batch-table-body" class="divide-y divide-slate-800/60 font-mono">
+              <tr>
+                <td colspan="8" class="p-8 text-center text-slate-500">Click "Run 25 Applicant Cohort" to simulate underwriting batch in INR.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: XGBOOST VS LOGISTIC REGRESSION      -->
+    <!-- ========================================== -->
+    <div id="view-models" class="tab-view hidden space-y-8">
+      
+      <!-- Model Benchmarks & Comparison -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-white flex items-center mb-2">
+          <i class="fa-solid fa-code-compare text-orange-400 mr-2.5"></i> XGBoost Classifier vs. Logistic Regression Scorecard
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Empirical benchmark on 3,200 held-out Indian credit applications:</p>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs text-slate-300 font-mono">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+              <tr>
+                <th class="p-3">Model Architecture</th>
+                <th class="p-3">Accuracy</th>
+                <th class="p-3">Precision</th>
+                <th class="p-3">Recall</th>
+                <th class="p-3">F1-Score</th>
+                <th class="p-3">ROC-AUC</th>
+                <th class="p-3">Underwriting Role</th>
+              </tr>
+            </thead>
+            <tbody id="model-benchmark-body" class="divide-y divide-slate-800/60">
+              <!-- Populated via API -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts Grid: ROC-AUC & Feature Importances -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- ROC Curve Chart -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-chart-area text-orange-400 mr-2"></i> Receiver Operating Characteristic (ROC-AUC)
+            </h4>
+            <span id="roc-auc-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-orange-950 text-orange-300 border border-orange-800 font-mono">ROC-AUC: 0.985</span>
+          </div>
+          <div class="h-64">
+            <canvas id="rocChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Feature Importances Bar Chart -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-ranking-star text-purple-400 mr-2"></i> XGBoost Top Feature Importances (Gain)
+            </h4>
+            <span class="text-xs text-slate-400">Tree Gain Metric</span>
+          </div>
+          <div class="h-64">
+            <canvas id="featureChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: RBI REGULATION & FAIR PRACTICES     -->
+    <!-- ========================================== -->
+    <div id="view-compliance" class="tab-view hidden space-y-8">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div class="border-b border-slate-800 pb-4">
+          <h3 class="text-xl font-bold text-white flex items-center">
+            <i class="fa-solid fa-scale-balanced text-orange-400 mr-3"></i> Reserve Bank of India (RBI) Regulatory Framework
+          </h3>
+          <p class="text-sm text-slate-400 mt-1">Governed by RBI Master Directions on Credit Card and Debit Card Issuance and Conduct (2022/2026), Fair Practices Code (FPC), and Credit Information Companies (CIC) Act.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+            <h4 class="text-sm font-bold text-orange-400 flex items-center">
+              <i class="fa-solid fa-building-columns mr-2"></i> Mandatory Credit Rejection Disclosure
+            </h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Under RBI Fair Practices Code, when a commercial bank or NBFC declines an application or extends a reduced credit line, it must convey the principal reasons in writing to the applicant based on objective underwriting criteria.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+            <h4 class="text-sm font-bold text-orange-400 flex items-center">
+              <i class="fa-solid fa-shield-halved mr-2"></i> FOIR &amp; Unsecured Exposure Norms
+            </h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Prudential retail lending standards limit total monthly debt obligations (Fixed Obligation to Income Ratio - FOIR) to a maximum of 50%-55% of verifiable net monthly earnings to prevent borrower debt distress.
+            </p>
+          </div>
+        </div>
+
+        <!-- Adverse Action Taxonomy -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-bold text-white uppercase tracking-wider">RBI Standard Adverse Action Reason Taxonomy</h4>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-xs text-slate-300 font-mono">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+                <tr>
+                  <th class="p-3">Reason Code</th>
+                  <th class="p-3">Regulatory Disclosure</th>
+                  <th class="p-3">Primary Trigger Condition</th>
+                  <th class="p-3">Category</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60">
+                <tr>
+                  <td class="p-3 text-orange-400">RBI_NPA_01</td>
+                  <td class="p-3 text-white">Suit Filed / NPA / Written-Off Status on CIBIL</td>
+                  <td class="p-3 text-slate-400">NPA settlement flag = 1</td>
+                  <td class="p-3 text-rose-400">Public Record</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-orange-400">RBI_FOIR_01</td>
+                  <td class="p-3 text-white">Excessive FOIR / Debt Obligation</td>
+                  <td class="p-3 text-slate-400">FOIR / DTI ratio ≥ 50.0%</td>
+                  <td class="p-3 text-amber-400">Affordability</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-orange-400">RBI_CIBIL_01</td>
+                  <td class="p-3 text-white">CIBIL Score Below Minimum Guideline</td>
+                  <td class="p-3 text-slate-400">CIBIL Score < 620</td>
+                  <td class="p-3 text-rose-400">Credit Bureau</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-orange-400">RBI_UTL_01</td>
+                  <td class="p-3 text-white">High Credit Card Revolving Utilization</td>
+                  <td class="p-3 text-slate-400">Utilization Rate ≥ 75.0%</td>
+                  <td class="p-3 text-amber-400">Credit Usage</td>
+                </tr>
+                <tr>
+                  <td class="p-3 text-orange-400">RBI_DPD_01</td>
+                  <td class="p-3 text-white">Recent Days Past Due (DPD) Delinquency</td>
+                  <td class="p-3 text-slate-400">Delinquencies (24M) ≥ 2</td>
+                  <td class="p-3 text-rose-400">Repayment Track</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-600">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>ApexBank India Automated Credit Decision System &copy; 2026. Powered by XGBoost, Logistic Regression &amp; Reserve Bank of India Regulatory Framework.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

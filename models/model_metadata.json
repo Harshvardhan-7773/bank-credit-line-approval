@@ -1,0 +1,302 @@
+{
+  "currency": "INR",
+  "currency_symbol": "₹",
+  "champion_classifier": "XGBoost Classifier (Champion)",
+  "model_benchmarks": {
+    "Logistic Regression (Basel Scorecard)": {
+      "accuracy": 0.9372,
+      "precision": 0.9408,
+      "recall": 0.9391,
+      "f1_score": 0.9399,
+      "roc_auc": 0.9882
+    },
+    "XGBoost Classifier (Champion)": {
+      "accuracy": 0.9281,
+      "precision": 0.9381,
+      "recall": 0.9236,
+      "f1_score": 0.9308,
+      "roc_auc": 0.9853
+    }
+  },
+  "classifier_metrics": {
+    "confusion_matrix": [
+      [
+        1423,
+        102
+      ],
+      [
+        128,
+        1547
+      ]
+    ],
+    "roc_auc": 0.9853,
+    "accuracy": 0.9281,
+    "precision": 0.9381,
+    "recall": 0.9236,
+    "f1_score": 0.9308,
+    "roc_curve": [
+      {
+        "fpr": 0.0,
+        "tpr": 0.0
+      },
+      {
+        "fpr": 0.0,
+        "tpr": 0.0448
+      },
+      {
+        "fpr": 0.0,
+        "tpr": 0.1373
+      },
+      {
+        "fpr": 0.0,
+        "tpr": 0.3206
+      },
+      {
+        "fpr": 0.002,
+        "tpr": 0.6913
+      },
+      {
+        "fpr": 0.0039,
+        "tpr": 0.7439
+      },
+      {
+        "fpr": 0.0066,
+        "tpr": 0.8048
+      },
+      {
+        "fpr": 0.0098,
+        "tpr": 0.8191
+      },
+      {
+        "fpr": 0.0144,
+        "tpr": 0.8281
+      },
+      {
+        "fpr": 0.017,
+        "tpr": 0.8436
+      },
+      {
+        "fpr": 0.021,
+        "tpr": 0.8501
+      },
+      {
+        "fpr": 0.0236,
+        "tpr": 0.8603
+      },
+      {
+        "fpr": 0.0262,
+        "tpr": 0.8657
+      },
+      {
+        "fpr": 0.0289,
+        "tpr": 0.8699
+      },
+      {
+        "fpr": 0.0308,
+        "tpr": 0.874
+      },
+      {
+        "fpr": 0.0328,
+        "tpr": 0.8788
+      },
+      {
+        "fpr": 0.0367,
+        "tpr": 0.8842
+      },
+      {
+        "fpr": 0.0393,
+        "tpr": 0.8872
+      },
+      {
+        "fpr": 0.042,
+        "tpr": 0.8907
+      },
+      {
+        "fpr": 0.0452,
+        "tpr": 0.9009
+      },
+      {
+        "fpr": 0.0479,
+        "tpr": 0.9051
+      },
+      {
+        "fpr": 0.0505,
+        "tpr": 0.9075
+      },
+      {
+        "fpr": 0.0531,
+        "tpr": 0.914
+      },
+      {
+        "fpr": 0.0557,
+        "tpr": 0.9158
+      },
+      {
+        "fpr": 0.0584,
+        "tpr": 0.9188
+      },
+      {
+        "fpr": 0.0656,
+        "tpr": 0.9218
+      },
+      {
+        "fpr": 0.0708,
+        "tpr": 0.9248
+      },
+      {
+        "fpr": 0.0728,
+        "tpr": 0.9313
+      },
+      {
+        "fpr": 0.08,
+        "tpr": 0.9349
+      },
+      {
+        "fpr": 0.0839,
+        "tpr": 0.9379
+      },
+      {
+        "fpr": 0.0866,
+        "tpr": 0.9445
+      },
+      {
+        "fpr": 0.0931,
+        "tpr": 0.9499
+      },
+      {
+        "fpr": 0.097,
+        "tpr": 0.9516
+      },
+      {
+        "fpr": 0.1049,
+        "tpr": 0.957
+      },
+      {
+        "fpr": 0.1115,
+        "tpr": 0.9588
+      },
+      {
+        "fpr": 0.1226,
+        "tpr": 0.9618
+      },
+      {
+        "fpr": 0.1305,
+        "tpr": 0.9648
+      },
+      {
+        "fpr": 0.1403,
+        "tpr": 0.969
+      },
+      {
+        "fpr": 0.1449,
+        "tpr": 0.9719
+      },
+      {
+        "fpr": 0.158,
+        "tpr": 0.9749
+      },
+      {
+        "fpr": 0.1646,
+        "tpr": 0.9785
+      },
+      {
+        "fpr": 0.1705,
+        "tpr": 0.9803
+      },
+      {
+        "fpr": 0.1836,
+        "tpr": 0.9839
+      },
+      {
+        "fpr": 0.1889,
+        "tpr": 0.9869
+      },
+      {
+        "fpr": 0.2039,
+        "tpr": 0.9899
+      },
+      {
+        "fpr": 0.2105,
+        "tpr": 0.9922
+      },
+      {
+        "fpr": 0.2531,
+        "tpr": 0.994
+      },
+      {
+        "fpr": 0.2748,
+        "tpr": 0.9958
+      },
+      {
+        "fpr": 0.3102,
+        "tpr": 0.9982
+      },
+      {
+        "fpr": 1.0,
+        "tpr": 1.0
+      }
+    ]
+  },
+  "regressor_metrics": {
+    "model": "XGBoost Regressor",
+    "mae_inr": 11340.77,
+    "rmse_inr": 18027.18,
+    "r2_score": 0.9873
+  },
+  "top_feature_importances": [
+    {
+      "feature": "credit_score",
+      "importance": 0.3636
+    },
+    {
+      "feature": "derogatory_density",
+      "importance": 0.1098
+    },
+    {
+      "feature": "revolving_utilization",
+      "importance": 0.0624
+    },
+    {
+      "feature": "num_derogatory_records",
+      "importance": 0.0523
+    },
+    {
+      "feature": "debt_to_income",
+      "importance": 0.0467
+    },
+    {
+      "feature": "inquiries_per_account",
+      "importance": 0.0399
+    },
+    {
+      "feature": "bankruptcy_history",
+      "importance": 0.0328
+    },
+    {
+      "feature": "disposable_income",
+      "importance": 0.032
+    },
+    {
+      "feature": "employment_years",
+      "importance": 0.0318
+    },
+    {
+      "feature": "num_credit_inquiries_6m",
+      "importance": 0.0304
+    },
+    {
+      "feature": "revolving_burden_ratio",
+      "importance": 0.0263
+    },
+    {
+      "feature": "delinquencies_2yrs",
+      "importance": 0.0223
+    }
+  ],
+  "underwriting_thresholds": {
+    "auto_approve_max_pd": 0.15,
+    "review_max_pd": 0.28,
+    "min_cibil_score": 600,
+    "max_foir": 0.5
+  }
+}
